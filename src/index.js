@@ -1,25 +1,43 @@
-require('dotenv').config();
-const express = require('express');
-const crypto = require('node:crypto');
-const fs = require('node:fs');
-const path = require('node:path');
-const cors = require('cors');
-const movies = require('./sources/movies.json');
-const { validateMovie, validatePartialMovie } = require('./schemas/movies');
-//
+//* Las siguientes importaciones son CommonJS:
+// require('dotenv').config();
+// const express = require('express');
+// const crypto = require('node:crypto');
+// const fs = require('node:fs');
+// const path = require('node:path');
+// const cors = require('cors');
+// const movies = require('./sources/movies.json');
+// const { validateMovie, validatePartialMovie } = require('./schemas/movies');
+// const app = express();
+// app.use(express.json());
+
+//* Las siguientes importaciones son ESM (ECMAScript Modules):
+import 'dotenv/config';
+import express, { json } from 'express';
+import { randomUUID } from 'node:crypto';
+import { writeFile } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import cors from 'cors';
+import movies from './sources/movies.json' with { type: 'json' }; //* Importando el archivo JSON como un módulo ESM
+import { validateMovie, validatePartialMovie } from './schemas/movies.js';
 const app = express();
-app.use(express.json());
-app.disable('x-powered-by');
+app.use(json());
+
+
+app.disable('x-powered-by'); //* Deshabilitar el encabezado x-powered-by para mayor seguridad (para que no muestre que es un servidor Express)
+
 const ACCEPTED_ORIGINS = [
   'http://localhost:5173',
-  'http://localhost:8080', // Puedes agregar más orígenes permitidos aquí
+  'http://localhost:8080', //* Puedes agregar más orígenes permitidos dentro de este array
 ]
-// app.use(cors()); // Con esta forma se estaria permitiendo el acceso a todos los orígenes, lo cual no es recomendable en producción
+// app.use(cors()); //* Con esta forma se estaria permitiendo el acceso a todos los orígenes, lo cual no es recomendable en producción
 // app.use(cors({
 //   origin: 'http://localhost:5173',
 //   methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
 //   allowedHeaders: ['Content-Type']
 // }));
+
+//* Cuando se requiera agregar mas de un origen, se puede hacer de la siguiente manera:
 app.use(cors({
   origin: (origin, callback) => {
     if( !origin || ACCEPTED_ORIGINS.includes(origin)) {
@@ -33,11 +51,14 @@ app.use(cors({
 }));
 
 const PORT = process.env.PORT || 2000;
-const pathMovies = path.join(__dirname, 'sources', 'movies.json');
+//* Definición de la ruta de archivo para movies.json */
+const __filename = fileURLToPath(import.meta.url); //* Obtiene toda la ruta del archivo actual (index.js) en formato file://
+const __dirname = dirname(__filename); //* Me convierte la ruta del archivo a un directorio manejable por Node.js (quitando el file:// al inicio y modificando las diagonales de la ruta de dependiendo del OS).
+const pathMovies = join(__dirname, 'sources', 'movies.json'); //* Ruta completa y correcta al archivo movies.json (el segundo argumento de join 'sources' es el nombre de la carpeta donde se encuentra el archivo y el ultimo es el nombre del archivo a buscar con la extension .json).
 
 app.get('/movies', (req, res) => {
   // res.header('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
-  // res.header('Access-Control-Allow-Origin', 'http://localhost:5173'); // Allow CORS for all origins
+  // res.header('Access-Control-Allow-Origin', 'http://localhost:5173'); // Allow CORS for http://localhost:5173 origin
 
   const { director } = req.query;
   const filteredMovies = director && movies?.filter(movie => movie.director.toLowerCase() === director.toLowerCase());
@@ -59,7 +80,7 @@ app.get('/movies', (req, res) => {
 
 app.get('/movies/:id', (req, res) => {
   const { id } = req.params;
-  const movie = movies.find(movie => movie.id === id);
+  const movie = movies?.find(movie => movie.id === id);
   if (movie) {
     res.status(200).json({
       message: 'Película encontrada',
@@ -88,10 +109,10 @@ app.post('/movies', (req, res) => {
   }
 
   const newMovie = {
-    id: crypto.randomUUID(),
+    id: randomUUID(),
     ...result.data
   }
-  fs.writeFile(pathMovies, JSON.stringify([...movies, newMovie], null, 2), error => {
+  writeFile(pathMovies, JSON.stringify([...movies, newMovie], null, 2), error => {
     if(error){
       return res.status(500).json({
         message: 'Error al guardar la película',
@@ -110,7 +131,7 @@ app.post('/movies', (req, res) => {
 
 app.patch('/movies/:id', (req, res) => {
   const { id } = req.params;
-  const movieIndex = id ? movies.findIndex(movie => movie.id === id) : -1;
+  const movieIndex = id ? movies?.findIndex(movie => movie.id === id) : -1;
   if(movieIndex === -1){
     return res.status(400).json({
       message: 'No se encontró la película a actualizar',
@@ -133,7 +154,7 @@ app.patch('/movies/:id', (req, res) => {
   }
 
   movies[movieIndex] = updatedMovie;
-  fs.writeFile(pathMovies, JSON.stringify(movies, null, 2), error => {
+  writeFile(pathMovies, JSON.stringify(movies, null, 2), error => {
     if(error){
       return res.status(500).json({
         message: 'Error al actualizar la película',
@@ -152,7 +173,7 @@ app.patch('/movies/:id', (req, res) => {
 
 app.delete('/movies/:id', (req, res) => {
   const { id } = req.params;
-  const movieIndex = id ? movies.findIndex(movie => movie.id === id) : -1;
+  const movieIndex = id ? movies?.findIndex(movie => movie.id === id) : -1;
   if(movieIndex === -1){
     return res.status(400).json({
       message: 'No se encontró la película',
@@ -160,8 +181,8 @@ app.delete('/movies/:id', (req, res) => {
     });
   }
 
-  const newMovies = movies.filter(movie => movie.id !== id);
-  fs.writeFile(pathMovies, JSON.stringify(newMovies, null, 2), error => {
+  const newMovies = movies?.filter(movie => movie.id !== id);
+  writeFile(pathMovies, JSON.stringify(newMovies, null, 2), error => {
     if(error){
       return res.status(500).json({
         message: 'Error al eliminar la película',
@@ -178,6 +199,7 @@ app.delete('/movies/:id', (req, res) => {
   });
 });
 
+//* Manejo de errores global cuando no se encuentra una ruta
 app.use((req, res) => {
   res.status(404).json({
     message: 'No se encontró la ruta',

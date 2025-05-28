@@ -1,4 +1,5 @@
-const zod = require('zod');
+// const zod = require('zod'); // Importacion de zod con CommonJS
+import zod from 'zod';
 
 const movieSchema = zod.object({
     title: zod.string({
@@ -23,15 +24,16 @@ const movieSchema = zod.object({
     rate: zod.number().min(0).max(10)
   });
 
-const validateMovie = (data) => {
+export const validateMovie = (data) => {
   return movieSchema.safeParse(data);
 }
 
-const validatePartialMovie = (data) => {
+export const validatePartialMovie = (data) => {
   return movieSchema.partial().safeParse(data);
 }
 
-module.exports = {
-  validateMovie,
-  validatePartialMovie
-}
+//* Exportando funciones en CommonJS
+// module.exports = {
+//   validateMovie,
+//   validatePartialMovie
+// }
