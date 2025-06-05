@@ -202,11 +202,27 @@
     "rate": 7.8
   },
   {
-    "id": "8eba19fb-4bc1-408f-8751-3dad33ab4ec0",
-    "title": "Red social 2",
+    "id": "0d1afe74-82dd-46e9-b3bb-35666929b2c7",
+    "title": "Volver al futuro",
     "year": 2000,
     "director": "Alguien",
     "duration": 120,
+    "poster": "https://i.ebayimg.com/images/g/4goAAOSwMyBe7hnQ/s-l1200.webp",
+    "genre": [
+      "Action"
+    ],
+    "rate": 8.5
+  },
+  {
+    "id": "153377bd-433d-49ea-b490-10695a69c35b",
+    "title": "Startup",
+    "year": 2000,
+    "director": "Si como no",
+    "duration": 120,
+    "poster": "https://i.ebayimg.com/images/g/4goAAOSwMyBe7hnQ/s-l1200.webp",
+    "genre": [
+      "Action"
+    ],
     "rate": 8.5
   }
 ]
